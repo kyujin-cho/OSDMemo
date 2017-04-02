@@ -1,0 +1,35 @@
+extends layout
+block content
+  .write-card-wide.mdl-card.mdl-shadow--2dp
+    .mdl-card__title
+      h2.mdl-card__title-text Write Memo
+    .mdl-card__supporting-text
+      //- span Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      //- span Mauris sagittis pellentesque lacus eleifend lacinia...
+      form(method="post", action="/write")
+        .mdl-grid
+          .mdl-cell--12-col
+            .mdl-textfield.mdl-js-textfield.mdl-textfield--floating-label
+              input.mdl-textfield__input#title-text(type="text")
+              label.mdl-textfield__label(for="title-text") Title
+          .mdl-cell--12-col
+            .mdl-textfield.mdl-js-textfield
+              textarea.mdl-textfield__input#contents-text(type="text", rows="10")
+              label.mdl-textfield__label(for="contents-text") Content
+          .mdl-cell--12-col
+            button.mdl-button.mdl-js-button.mdl-button--raised.mdl-button--colored.right-align(type="submit") Write
+    //-        <input class="mdl-textfield__input" type="text" id="sample1">
+    //- <label class="mdl-textfield__label" for="sample1">Text...</label>
+    .mdl-card-actions.mdl-card--border
+      //- .mdl-grid
+      //-   .mdl-cell.mdl-cell--4-col.mdl-cell--4-col-tablet.mdl-cell--4-col-phone
+      //-     span 1970.1.1 00:00 AM
+      //-   .mdl-cell.mdl-cell--4-col.mdl-cell--4-col-tablet.mdl-cell--4-col-phone
+      //-     span Seoul, Korea
+      //-   .mdl-cell.mdl-cell--2-col.mdl-cell--6-col-tablet.mdl-cell--2-col-phone
+      //-     button#right.mdl-button.mdl-js-button.mdl-button--fab.mdl-button--mini-fab
+      //-       i.material-icons edit
+      //-   .mdl-cell.mdl-cell--2-col.mdl-cell--2-col-tablet.mdl-cell--2-col-phone
+      //-     button#right.mdl-button.mdl-js-button.mdl-button--fab.mdl-button--mini-fab
+      //-       i.material-icons remove
+      

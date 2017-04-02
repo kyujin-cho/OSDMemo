@@ -1,0 +1,30 @@
+extends layout
+
+block content
+  .mdl-grid
+    - var i = 1
+      while i <= 8
+        .mdl-cell.mdl-cell--6-col.mdl-cell--8-col-tablet.mld-cell--4-col-phone
+          .demo-card-wide.mdl-card.mdl-shadow--2dp
+            .mdl-card__title
+              h2.mdl-card__title-text Note Taking Title Example #{i}
+            .mdl-card__supporting-text
+              span Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+              span Mauris sagittis pellentesque lacus eleifend lacinia...
+            .mdl-card-actions.mdl-card--border
+              .mdl-grid
+                .mdl-cell.mdl-cell--1-col.mdl-cell--1-col-tablet.mdl-cell--1-col-phone
+                  i.material-icons date_range
+                .mdl-cell.mdl-cell--3-col.mdl-cell--3-col-tablet.mdl-cell--3-col-phone
+                  span 1970.1.1 00:00 AM
+                .mdl-cell.mdl-cell--1-col.mdl-cell--1-col-tablet.mdl-cell--1-col-phone
+                  i.material-icons location_on  
+                .mdl-cell.mdl-cell--3-col.mdl-cell--3-col-tablet.mdl-cell--3-col-phone
+                  span Seoul, Korea
+                .mdl-cell.mdl-cell--2-col.mdl-cell--7-col-tablet.mdl-cell--2-col-phone
+                  button.right-align.mdl-button.mdl-js-button.mdl-button--fab.mdl-button--mini-fab
+                    i.material-icons edit
+                .mdl-cell.mdl-cell--2-col.mdl-cell--1-col-tablet.mdl-cell--2-col-phone
+                  button.right-align.mdl-button.mdl-js-button.mdl-button--fab.mdl-button--mini-fab
+                    i.material-icons delete
+        - i++

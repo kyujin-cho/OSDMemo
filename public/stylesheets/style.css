@@ -1,0 +1,119 @@
+body {
+  /*padding: 50px;*/
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+.layout-transparent {
+  background: url('../images/transparent.jpg') center / cover;
+}
+.layout-transparent .mdl-layout__header,
+.layout-transparent .mdl-layout__drawer-button {
+  /* This background is dark, so we set text to white. Use 87% black instead if
+     your background is light. */
+  color: white;
+}
+
+.mdl-layout {
+  /*width: 90%;*/
+  margin-left: auto;
+  margin-right: auto;
+}
+
+a {
+  color: #00B7FF;
+}
+
+button.left-align {
+  float: left;
+}
+button.right-align {
+  float: right;
+}
+
+.demo-card-wide.mdl-card {
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 15px;
+}
+.demo-card-wide > .mdl-card__title {
+  color: #fff;
+  height: 100px;
+  background: url('../images/welcome_card.jpg') center / cover;
+}
+.demo-card-wide > .mdl-card__menu {
+  color: #fff;
+}
+
+.settings-card-wide.mdl-card {
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 30px;
+}
+
+.write-card-wide.mdl-card {
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 30px;
+}
+
+.settings-card-wide > .mdl-card__title {
+  color: #000;
+  /*background: url('../images/welcome_card.jpg') center / cover;*/
+}
+
+.settings-card-wide > .mdl-card__title > h2.mdl-card__title-text {
+  margin-top: 10px;
+  margin-left: 10px;
+}
+.demo-card-wide > .mdl-card__menu {
+  color: #fff;
+}
+
+span.settings-title {
+  font-family: "Product Sans";
+}
+
+.write-card-wide > .mdl-card__supporting-text * {
+  width: 100%;
+}
+
+.write-card-wide > .mdl-card__supporting-text > form > .mdl-grid > .mdl-cell--12-col > button {
+  width: auto;
+  
+}
+
+
+.fabs {
+  /*position: absolute;*/
+  z-index: 1;
+}
+
+main.mdl-layout__content {
+  margin-top: 35px;
+}
+
+span.mdl-layout-title {
+  font-family: "Product Sans";
+}
+
+h1 {
+  font-family: "Product Sans";
+}
+h2 {
+  font-family: "Product Sans";
+}
+h3 {
+  font-family: "Product Sans";
+}
+h4 {
+  font-family: "Product Sans";
+}
+h5 {
+  font-family: "Product Sans";
+}
+h6 {
+  font-family: "Product Sans";
+}
