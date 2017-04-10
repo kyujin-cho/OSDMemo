@@ -1,4 +1,3 @@
-import combine from 'koa-combine-routers'
 import Router from 'koa-router'
 import notes from './notes'
 import settings from './settings'

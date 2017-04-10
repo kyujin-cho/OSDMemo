@@ -6,15 +6,15 @@ block content
     .mdl-card__supporting-text
       //- span Lorem ipsum dolor sit amet, consectetur adipiscing elit.
       //- span Mauris sagittis pellentesque lacus eleifend lacinia...
-      form(method="post", action="/write")
+      form(method="POST", action="/notes/write")
         .mdl-grid
           .mdl-cell--12-col
             .mdl-textfield.mdl-js-textfield.mdl-textfield--floating-label
-              input.mdl-textfield__input#title-text(type="text")
+              input.mdl-textfield__input#title-text(type="text", name="title")
               label.mdl-textfield__label(for="title-text") Title
           .mdl-cell--12-col
             .mdl-textfield.mdl-js-textfield
-              textarea.mdl-textfield__input#contents-text(type="text", rows="10")
+              textarea.mdl-textfield__input#contents-text(type="text", name="contents", rows="10")
               label.mdl-textfield__label(for="contents-text") Content
           .mdl-cell--12-col
             button.mdl-button.mdl-js-button.mdl-button--raised.mdl-button--colored.right-align(type="submit") Write

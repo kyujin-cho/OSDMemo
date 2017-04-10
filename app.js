@@ -1,14 +1,15 @@
-const Koa = require('koa')
-const app = new Koa()
-const views = require('koa-views')
-const co = require('co')
-const convert = require('koa-convert')
-const json = require('koa-json')
-const onerror = require('koa-onerror')
-const bodyparser = require('koa-bodyparser')()
-const logger = require('koa-logger')
+import Koa from 'koa'
+import views from 'koa-views'
+import convert from 'koa-convert'
+import json from 'koa-json'
+import BP from 'koa-bodyparser'
+import logger from 'koa-logger'
 
-const index = require('./routes/index')
+import mongoose from 'mongoose'
+
+import index from './routes/index'
+const app = new Koa()
+const bodyparser = new BP()
 
 // middlewares
 app.use(convert(bodyparser))
@@ -19,6 +20,14 @@ app.use(require('koa-static')(__dirname + '/public'))
 app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
+
+const db = mongoose.connection
+db.on('error', console.error)
+db.once('open', () => {
+  console.log('connected to mongodb server')
+})
+
+mongoose.connect('localhost/test')
 
 // logger
 app.use(async (ctx, next) => {
@@ -36,5 +45,4 @@ app.on('error', function(err, ctx){
   logger.error('server error', err, ctx)
 })
 
-
-module.exports = app
+export default app
