@@ -8,4 +8,5 @@ router.get('/', async (ctx, next) => {
 })
 router.use(notes.routes(), notes.allowedMethods())
 router.use(settings.routes(), settings.allowedMethods())
+
 export default router
