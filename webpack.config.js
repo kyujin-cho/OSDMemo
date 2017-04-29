@@ -1,9 +1,10 @@
 module.exports = {
-  entry : './js/index.js',
+  entry : ['babel-polyfill', './js/index.js'],
   output: {
     path: __dirname + '/public/javascripts',
     filename: 'script.js'
   },
+  devtool: 'source-map',
   module: {
     loaders: [
       {
