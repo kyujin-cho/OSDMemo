@@ -15249,7 +15249,7 @@ var NoteApp = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (NoteApp.__proto__ || Object.getPrototypeOf(NoteApp)).call(this, props));
 
-    _this.state = { notes: {}, isOpen: false, title: '', contents: '', data: '', searchKwd: '' };
+    _this.state = { notes: {}, isOpen: false, title: '', contents: '', data: '', key: '', searchKwd: '' };
     return _this;
   }
 
@@ -15305,9 +15305,10 @@ var NoteApp = function (_React$Component) {
     }()
   }, {
     key: 'openEditNote',
-    value: function openEditNote(note) {
+    value: function openEditNote(key, note) {
       this.setState({
         data: note,
+        key: key,
         title: note.title,
         contents: note.contents
       });
@@ -15446,20 +15447,23 @@ var NoteApp = function (_React$Component) {
                 event.preventDefault();
                 title = this.state.title;
                 contents = this.state.contents;
-                _context3.next = 5;
+
+                console.log(this.state.key);
+
+                _context3.next = 6;
                 return _axios2.default.put('/api/notes/' + this.state.key, {
                   title: title,
                   contents: contents
                 });
 
-              case 5:
+              case 6:
                 response = _context3.sent;
 
 
                 console.log(response.data);
 
                 if (!response.data.success) {
-                  _context3.next = 14;
+                  _context3.next = 15;
                   break;
                 }
 
@@ -15467,18 +15471,18 @@ var NoteApp = function (_React$Component) {
 
                 tmp[this.state.key] = response.data.note;
                 console.log(response.data.note);
-                _context3.next = 13;
+                _context3.next = 14;
                 return this.setState({
                   title: '',
                   contents: '',
                   notes: tmp
                 });
 
-              case 13:
+              case 14:
                 this.closeModal();
                 // this.props.showNote()
 
-              case 14:
+              case 15:
               case 'end':
                 return _context3.stop();
             }
@@ -15620,16 +15624,21 @@ var NoteApp = function (_React$Component) {
                   ),
                   _react2.default.createElement(
                     'div',
-                    { className: 'mdl-cell--12-col' },
+                    { className: 'mdl-cell--6-col' },
                     _react2.default.createElement(
                       'div',
                       { className: 'mdl-textfield mdl-js-textfield' },
-                      _react2.default.createElement('textarea', { className: 'mdl-textfield__input', id: 'title-text', value: this.state.contents, onChange: this.changeContents.bind(this), type: 'text', name: 'contents', rows: '10' })
+                      _react2.default.createElement('textarea', { className: 'mdl-textfield__input', id: 'contents-text', value: this.state.contents, onChange: this.changeContents.bind(this), type: 'text', name: 'contents', rows: '10' })
                     )
                   ),
                   _react2.default.createElement(
                     'div',
-                    { className: 'mdl-cell--12-col' },
+                    { className: 'mdl-cell--6-col mdl-cell--4-col-tablet mdl-cell--2-col-phone' },
+                    _react2.default.createElement(_reactMarkdown2.default, { source: this.state.contents })
+                  ),
+                  _react2.default.createElement(
+                    'div',
+                    { className: 'mdl-cell--12-col mdl-cell--4-col-tablet mdl-cell--2-col-phone' },
                     _react2.default.createElement(
                       'button',
                       { className: 'mdl-button mdl-js-button mdl-button--raised mdl-button--colored right-align', type: 'submit' },
@@ -15663,7 +15672,7 @@ var NoteList = function (_React$Component2) {
     value: function render() {
       var Notes = [];
       for (var key in this.props.notes) {
-        if (!this.props.notes[key]['hide']) Notes.push(_react2.default.createElement(Note, { data: this.props.notes[key], key: key, editNote: this.props.editNote, deleteNote: this.props.deleteNote }));
+        if (!this.props.notes[key]['hide']) Notes.push(_react2.default.createElement(Note, { data: this.props.notes[key], key: key, k: key, editNote: this.props.editNote, deleteNote: this.props.deleteNote }));
       }
 
       return _react2.default.createElement(
@@ -15788,7 +15797,7 @@ var Note = function (_React$Component3) {
                   _react2.default.createElement(
                     'button',
                     { className: 'right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab', onClick: function onClick() {
-                        _this4.props.editNote(_this4.props.key, _this4.props.data);
+                        _this4.props.editNote(_this4.props.k, _this4.props.data);
                       } },
                     _react2.default.createElement(
                       'i',
@@ -15803,7 +15812,7 @@ var Note = function (_React$Component3) {
                   _react2.default.createElement(
                     'button',
                     { className: 'right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab', onClick: function onClick() {
-                        _this4.props.deleteNot(_this4.props.key, _this4.props.data);
+                        _this4.props.deleteNot(_this4.props.k, _this4.props.data);
                       } },
                     _react2.default.createElement(
                       'i',

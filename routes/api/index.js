@@ -4,7 +4,7 @@ import thenLevelup from 'then-levelup'
 import passwordHash from 'password-hash'
 import controller_settings from './settings.controller'
 
-const db = thenLevelup(levelup('../../DB/database.lvup', {'valueEncoding': 'json'}))
+const db = thenLevelup(levelup('../../NOTESDB', {'valueEncoding': 'json'}))
 const router = new Router({prefix: '/api'})
 
 export async function getNotes(ctx, next) {

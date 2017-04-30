@@ -1,4 +1,5 @@
 import React from 'react'
+import GoogleMapReact from 'google-map-react'
 import axios from 'axios'
 import Modal from 'react-modal'
 import DatePicker from 'react-datepicker'
@@ -26,7 +27,7 @@ function getUserPosition() {
 class NoteApp extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {notes: {}, isOpen: false, title: '', contents: '', data: '', searchKwd: ''}
+    this.state = {notes: {}, isOpen: false, title: '', contents: '', data: '', key: '', searchKwd: ''}
   }
 
   addNote(key, note) {
@@ -51,9 +52,10 @@ class NoteApp extends React.Component {
     }
   }
 
-  openEditNote(note) {
+  openEditNote(key, note) {
     this.setState({
       data: note,
+      key: key,
       title: note.title,
       contents: note.contents
     })
@@ -140,7 +142,8 @@ class NoteApp extends React.Component {
     event.preventDefault()
     const title = this.state.title
     const contents = this.state.contents
-
+    console.log(this.state.key)
+    
     const response = await axios.put('/api/notes/' + this.state.key, {
       title: title, 
       contents: contents
@@ -220,12 +223,15 @@ class NoteApp extends React.Component {
                       <input className="mdl-textfield__input" id="title-text" value={this.state.title} onChange={this.changeTitle.bind(this)} type="text" name="title"/>
                     </div>
                   </div>
-                  <div className="mdl-cell--12-col">
+                  <div className="mdl-cell--6-col">
                     <div className="mdl-textfield mdl-js-textfield">
-                      <textarea className="mdl-textfield__input" id="title-text" value={this.state.contents} onChange={this.changeContents.bind(this)} type="text" name="contents" rows="10"></textarea>
+                      <textarea className="mdl-textfield__input" id="contents-text" value={this.state.contents} onChange={this.changeContents.bind(this)} type="text" name="contents" rows="10"></textarea>
                     </div>
                   </div>
-                  <div className="mdl-cell--12-col">
+                  <div className="mdl-cell--6-col mdl-cell--4-col-tablet mdl-cell--2-col-phone">
+                    <ReactMarkdown source={this.state.contents} />
+                  </div>
+                  <div className="mdl-cell--12-col mdl-cell--4-col-tablet mdl-cell--2-col-phone">
                     <button className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored right-align" type="submit">Write</button>
                   </div>
                 </div>
@@ -244,7 +250,7 @@ class NoteList extends React.Component {
     let Notes = []
     for(const key in this.props.notes) {
       if(!this.props.notes[key]['hide'])
-        Notes.push(<Note data={this.props.notes[key]} key={key} editNote={this.props.editNote} deleteNote={this.props.deleteNote} />)
+        Notes.push(<Note data={this.props.notes[key]} key={key} k={key} editNote={this.props.editNote} deleteNote={this.props.deleteNote} />)
     }
     
     return (
@@ -277,6 +283,21 @@ class Note extends React.Component {
   
   render() {
     const date = moment(this.props.data.time).format('MMMM Do YYYY')
+    const AnyReactComponent = ({ text }) => <div>{text}</div>
+    let GoogleMap
+    if(this.props.data.latitude !== -200) {
+      GoogleMap = (
+        <GoogleMapReact
+          defaultCenter={{lat: this.props.data.latitude, lon: this.props.data.longitude}}
+          defaultZoom={11}
+        >
+          <AnyReactComponent
+            lat={this.props.data.latitude}
+            lon={this.props.data.longitude}
+            text={'You\'re here!'} />
+        </GoogleMapReact>
+      )
+    } 
     return (
       <div>
         <div className="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet mld-cell--4-col-phone">
@@ -299,15 +320,15 @@ class Note extends React.Component {
                   <i className="material-icons">location_on</i>
                 </div>
                 <div className="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet mdl-cell--3-col-phone">
-                  <span>Seoul, Korea</span>
+                  {GoogleMap}
                 </div>
                 <div className="mdl-cell mdl-cell--2-col mdl-cell--7-col-tablet mdl-cell--2-col-phone">
-                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.editNote(this.props.key, this.props.data)}}>
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.editNote(this.props.k, this.props.data)}}>
                   <i className="material-icons">edit</i>
                   </button> 
                 </div>
                 <div className="mdl-cell mdl-cell--2-col mdl-cell--1-col-tablet mdl-cell--2-col-phone">
-                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNot(this.props.key, this.props.data)}}>
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNot(this.props.k, this.props.data)}}>
                   <i className="material-icons">delete</i>
                   </button>
                 </div>
