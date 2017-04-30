@@ -13,7 +13,7 @@ module.exports = {
         exclude: '/node_modules/',
         query: {
           cacheDirectory: true,
-          presets: ['env', 'react']
+          presets: ['env', 'react', 'stage-0']
         }
       }
     ]

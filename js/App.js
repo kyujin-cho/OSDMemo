@@ -1,42 +1,73 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 import axios from 'axios'
+import Dropzone from 'react-dropzone'
+import Modal from 'react-modal'
+import DatePicker from 'react-datepicker'
+import { LiveMarkedArea } from 'react-markdown-area'
+import ReactMarkdown from 'react-markdown'
+import moment from 'moment'
+
 require('babel-polyfill')
+Modal.setAppElement('main.mdl-layout__content')
+const customStyles = {
+  content : {
+    top                   : '50%',
+    left                  : '50%',
+    right                 : 'auto',
+    bottom                : 'auto',
+    marginRight           : '-50%',
+    transform             : 'translate(-50%, -50%)'
+  }
+}
+function getUserPosition() {
+  return new Promise(function(resolve, reject) {
+    navigator.geolocation.getCurrentPosition(resolve, reject)
+  })
+}
 
 class NoteApp extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {notes: []}
+    this.state = {notes: [], isOpen: false, title: '', contents: '', data: '', searchKwd: ''}
   }
 
   addNote(note) {
-    const index = this.state.notes.length
-    const newNotes = this.state.notes.concat(<Note data={note} key={index} deleteNote={this.deleteNote.bind(this)}/>)
-    console.log(newNotes)
-    
+    note['hide'] = false
     this.setState({
-      notes: newNotes
+      notes: this.state.notes.concat(note)
     })
   }
 
   async deleteNote(note) {
+    console.log('mocking ' + note._id + ' delete request')
+    
     const response = await axios.delete('/api/notes/' + note._id)
     if(response.data.success) {
-      const newNotes = this.state.notes
-      newNotes.pop(note)
+      const newNote = this.state.notes
+      newNote.splice(newNote.indexOf(note), 1)
       this.setState({
-        notes: newNotes
+        notes: newNote
       })
     }
   }
 
+  openEditNote(note) {
+    this.setState({
+      data: note,
+      title: note.title,
+      contents: note.contents
+    })
+    this.openModal()
+  }
   async componentDidMount() {
     const response = await axios.get('/api/notes')
     console.log(response)
-    let newNote = []
-    await response.data.result.forEach((note, index) => {
-      newNote.push(<Note data={note} key={index} deleteNote={this.deleteNote.bind(this)}/>)
+    const notes = response.data.result.map((note, index) => {
+      note['hide'] = false
+      return note
     })
-    this.setState({notes: newNote})
+    this.setState({notes: response.data.result})
   }
 
   closeDrawer() {
@@ -48,6 +79,7 @@ class NoteApp extends React.Component {
   }
 
   showNote() {
+    this.closeModal()
     document.getElementsByClassName('notes')[0].setAttribute('style', 'display: block;')
     document.getElementsByClassName('writeNote')[0].setAttribute('style', 'display: none;')
     document.getElementsByClassName('settings')[0].setAttribute('style', 'display: none;')
@@ -55,6 +87,7 @@ class NoteApp extends React.Component {
   }
 
   showWriteNote() {
+    this.closeModal()
     document.getElementsByClassName('notes')[0].setAttribute('style', 'display: none;')
     document.getElementsByClassName('writeNote')[0].setAttribute('style', 'display: block;')
     document.getElementsByClassName('settings')[0].setAttribute('style', 'display: none;')
@@ -62,86 +95,229 @@ class NoteApp extends React.Component {
   }
 
   showSetting() {
+    this.closeModal()
     document.getElementsByClassName('notes')[0].setAttribute('style', 'display: none;')
     document.getElementsByClassName('writeNote')[0].setAttribute('style', 'display: none;')
     document.getElementsByClassName('settings')[0].setAttribute('style', 'display: block;')
     this.closeDrawer()
   }
+  getParent() {
+    return document.querySelector('main.mdl-layout__content')
+  }
+  
+  openModal() {
+    this.setState({isOpen: true})
+    document.querySelector('main.mdl-layout__content').setAttribute('style', 'display: none;')
+  }
+  afterOpenModal() {
+    // this.subtitle.style.color = '#f00'
+  }
+  closeModal() {
+    this.setState({isOpen: false})
+    document.querySelector('main.mdl-layout__content').removeAttribute('style')
+  }
+  changeTitle(event) {
+    this.setState({
+      title: event.target.value
+    })
+  }
+  changeContents(event) {
+    this.setState({
+      contents: event.target.value
+    })
+  }
+  changeSearchKwd(event) {
+    this.setState({searchKwd: event.target.value})
+    const tmp = this.state.notes
+    if(event.target.value === '') 
+      tmp.forEach(note => {note['hide'] = false})
+    else
+      tmp.forEach(note => {note['hide'] = (note.title.indexOf(event.target.value) == -1) && (note.contents.indexOf(event.target.value) == -1)})
+    this.setState({
+      notes: tmp
+    })
+
+  }
+  async editNote(event) {
+    event.preventDefault()
+    const title = this.state.title
+    const contents = this.state.contents
+
+    const response = await axios.put('/api/notes/' + this.state.data._id, {
+      title: title, 
+      contents: contents
+    })
+
+    console.log(response.data)
+    
+    if(response.data.success) {
+      const index = this.state.notes.indexOf(this.state.data)
+      console.log(index)
+      let tmp = this.state.notes
+      tmp[index] = response.data.note
+      console.log(response.data.note)
+      await this.setState({
+        title: '',
+        contents: '',
+        notes: tmp
+      })
+      this.closeModal()
+      // this.props.showNote()
+    }
+  }
 
   render() {
     return (
-      <div className="layout-transparent mdl-layout mdl-js-layout">
-        <header className="mdl-layout__header mdl-layout__header--transparent">
-          <div className="mdl-layout__header-row">
-            <span className="mdl-layout-title">Note Taking App</span>
-            <div className="mdl-layout-spacer"></div>
-            <form action="/search" method="post">
-              <div className="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-                <label className="mdl-button mdl-js-button mdl-button--icon" htmlFor="search-exp">
-                  <i className="material-icons">search</i>
-                </label>
-                <div className="mdl-textfield__expandable-holder">
-                  <input className="mdl-textfield__input" id="search-exp" type="text"/>
+      <div>
+        <div className="layout-transparent mdl-layout mdl-js-layout">
+          <header className="mdl-layout__header mdl-layout__header--transparent">
+            <div className="mdl-layout__header-row">
+              <span className="mdl-layout-title">Note Taking App</span>
+              <div className="mdl-layout-spacer"></div>
+              <form>
+                <div className="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+                  <label className="mdl-button mdl-js-button mdl-button--icon" htmlFor="search-exp">
+                    <i className="material-icons">search</i>
+                  </label>
+                  <div className="mdl-textfield__expandable-holder">
+                    <input className="mdl-textfield__input" value={this.state.searchKwd} onChange={this.changeSearchKwd.bind(this)} id="search-exp" type="text"/>
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
+          </header>
+          <div className="mdl-layout__drawer">
+            <span className="mdl-layout-title">Note Taking App</span>
+            <nav className="mdl-navigation">
+              <a className="mdl-navigation__link" onClick={this.showNote.bind(this)}>View Notes</a>
+              <a className="mdl-navigation__link" onClick={this.showWriteNote.bind(this)}>Write Note</a>
+              <a className="mdl-navigation__link" onClick={this.showSetting.bind(this)}>Settings</a>
+            </nav>
           </div>
-        </header>
-        <div className="mdl-layout__drawer">
-          <span className="mdl-layout-title">Note Taking App</span>
-          <nav className="mdl-navigation">
-            <a className="mdl-navigation__link" onClick={this.showNote.bind(this)}>View Notes</a>
-            <a className="mdl-navigation__link" onClick={this.showWriteNote.bind(this)}>Write Note</a>
-            <a className="mdl-navigation__link" onClick={this.showSetting.bind(this)}>Settings</a>
-          </nav>
+          <main className="mdl-layout__content">
+            <NoteList editNote={this.openEditNote.bind(this)} deleteNote={this.deleteNote.bind(this)} notes={this.state.notes} />
+            {/*<Notes className="notes" notes={this.state.notes} addNote={this.addNote.bind(this)} />*/}
+            <WriteNote className="writeNote" addNote={this.addNote.bind(this)} showNote={this.showNote.bind(this)} />
+            <Settings className="settings" />
+          </main>
+          <div id="loading-toast" className="mdl-js-snackbar mdl-snackbar" >
+            <div className="mdl-snackbar__text"></div>
+            <button className="mdl-snackbar__action" type="button"></button>
+          </div>
         </div>
-        <main className="mdl-layout__content">
-          <div className="notes">
-            {this.state.notes}
+        <Modal
+          isOpen={this.state.isOpen}
+          onAfterOpen={this.afterOpenModal.bind(this)}
+          onRequestClose={this.closeModal.bind(this)}
+          contentLabel={'Edit Note ' + this.state.data.title}
+          ariaHideApp={true}
+        >
+          <div className="write-card-wide mdl-card mdl-shadow--2dp writeNote" >
+            <div className="mdl-card__title">
+              <h2 className="mdl-card__title-text">Write Memo</h2>
+            </div>
+            <div className="mdl-card__supporting-text">
+              <form onSubmit={this.editNote.bind(this)}>
+                <div className="mdl-grid">
+                  <div className="mdl-cell--12-col">
+                    <div className="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                      <input className="mdl-textfield__input" id="title-text" value={this.state.title} onChange={this.changeTitle.bind(this)} type="text" name="title"/>
+                      <label className="mdl-textfield__label" htmlFor="title-text">Title</label>
+                    </div>
+                  </div>
+                  <div className="mdl-cell--12-col">
+                    <div className="mdl-textfield mdl-js-textfield">
+                      <textarea className="mdl-textfield__input" id="title-text" value={this.state.contents} onChange={this.changeContents.bind(this)} type="text" name="contents" rows="10"></textarea>
+                      <label className="mdl-textfield__label" htmlFor="contents-text">Content</label>
+                    </div>
+                  </div>
+                  <div className="mdl-cell--12-col">
+                    <button className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored right-align" type="submit">Write</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div className="mdl-card-actions mdl-card--border" />
           </div>
-          {/*<Notes className="notes" notes={this.state.notes} addNote={this.addNote.bind(this)} />*/}
-          <WriteNote className="writeNote" addNote={this.addNote.bind(this)} showNote={this.showNote.bind(this)} />
-          <Settings className="settings" />
-        </main>
+        </Modal>
       </div>
     )
   }
 }
 
-class Note extends React.Component {
+class NoteList extends React.Component {
   render() {
+    const Notes = this.props.notes.map((note, index) => {
+      console.log(note)
+      
+      if(!note['hide'])
+        return <Note data={note} key={index} editNote={this.props.editNote} deleteNote={this.props.deleteNote}/>
+    })
+    
     return (
-      <div className="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet mld-cell--4-col-phone">
-        <div className="demo-card-wide mdl-card mdl-shadow--2dp">
-          <div className="mdl-card__title">
-            <h2 className="mdl-card__title-text">{this.props.data.title}</h2>
-          </div>
-          <div className="mdl-card__supporting-text">
-            <span>{this.props.data.contents}</span>
-          </div>
-          <div className="mdl-card-actions mdl-card--border">
-            <div className="mdl-grid">
-              <div className="mdl-cell mdl-cell--1-col mdl-cell--1-col-tablet mdl-cell--1-col-phone">
-                <i className="material-icons">date_range</i>
-              </div>
-              <div className="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet mdl-cell--3-col-phone">
-                <span>{this.props.data.date}</span>
-              </div>
-              <div className="mdl-cell mdl-cell--1-col mdl-cell--1-col-tablet mdl-cell--1-col-phone">
-                <i className="material-icons">location_on</i>
-              </div>
-              <div className="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet mdl-cell--3-col-phone">
-                <span>Seoul, Korea</span>
-              </div>
-              <div className="mdl-cell mdl-cell--2-col mdl-cell--7-col-tablet mdl-cell--2-col-phone">
-                <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab">
-                <i className="material-icons">edit</i>
-                </button>
-              </div>
-              <div className="mdl-cell mdl-cell--2-col mdl-cell--1-col-tablet mdl-cell--2-col-phone">
-                <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNote(this.props.data)}}>
-                <i className="material-icons">delete</i>
-                </button>
+      <div className="notes">
+        {Notes}
+      </div>
+    )
+  }
+}
+class Note extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state={isOpen: false}
+  }
+  getParent() {
+    return document.querySelector('main.mdl-layout__content')
+  }
+  
+  openModal() {
+    this.setState({isOpen: true})
+    document.querySelector('main.mdl-layout__content').setAttribute('style', 'display: none;')
+  }
+  afterOpenModal() {
+    // this.subtitle.style.color = '#f00'
+  }
+  closeModal() {
+    this.setState({isOpen: false})
+    document.querySelector('main.mdl-layout__content').removeAttribute('style')
+  }
+  
+  render() {
+    const date = moment(this.props.data.time).format('MMMM Do YYYY')
+    return (
+      <div>
+        <div className="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet mld-cell--4-col-phone">
+          <div className="demo-card-wide mdl-card mdl-shadow--2dp">
+            <div className="mdl-card__title">
+              <h2 className="mdl-card__title-text">{this.props.data.title}</h2>
+            </div>
+            <div className="mdl-card__supporting-text">
+              <ReactMarkdown source={this.props.data.contents} />
+            </div>
+            <div className="mdl-card-actions mdl-card--border">
+              <div className="mdl-grid">
+                <div className="mdl-cell mdl-cell--1-col mdl-cell--1-col-tablet mdl-cell--1-col-phone">
+                  <i className="material-icons">date_range</i>
+                </div>
+                <div className="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+                  <span>{date}</span>
+                </div>
+                <div className="mdl-cell mdl-cell--1-col mdl-cell--1-col-tablet mdl-cell--1-col-phone">
+                  <i className="material-icons">location_on</i>
+                </div>
+                <div className="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+                  <span>Seoul, Korea</span>
+                </div>
+                <div className="mdl-cell mdl-cell--2-col mdl-cell--7-col-tablet mdl-cell--2-col-phone">
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.editNote(this.props.data)}}>
+                  <i className="material-icons">edit</i>
+                  </button> 
+                </div>
+                <div className="mdl-cell mdl-cell--2-col mdl-cell--1-col-tablet mdl-cell--2-col-phone">
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNote(this.props.data)}}>
+                  <i className="material-icons">delete</i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -154,35 +330,78 @@ class Note extends React.Component {
 class WriteNote extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {title: '', contents: ''}
+    this.state = {title: '', contents: '', date: moment()}
   }
   changeTitle(event) {
     this.setState({
       title: event.target.value
     })
   }
-  changeContents(event) {
+  changeContents(contents) {
     this.setState({
-      contents: event.target.value
+      contents: contents
+    })
+  }
+  changeDate(date) {
+    this.setState({
+      date: date
     })
   }
   async writeNote(event) {
     event.preventDefault()
     const title = this.state.title
     const contents = this.state.contents
+    if(!title || !contents) {
+      alert('내용 및 제목을 입력해 주세요!')
+      return
+    }
 
+    document.getElementsByClassName('note-write-loading')[0].setAttribute('style', 'display:block;')
+    document.querySelector('#loading-toast').MaterialSnackbar.showSnackbar({message: 'Posting note...'})
+
+    let latitude, longitude
+    
+    if(navigator.geolocation) {
+      try { 
+        const location = await getUserPosition()
+        latitude = location.coords.latitude
+        longitude = location.coords.longitude
+      } catch(error) {
+        latitude = -200
+        longitude = -200
+      }
+    } else {
+      latitude = -200
+      longitude = -200
+    }
+    const dateString = await this.state.date.toISOString()
+    console.log(dateString)
+    
+    
     const response = await axios.post('/api/notes', {
       title: title, 
-      contents: contents
+      contents: contents,
+      latitude: latitude,
+      longitude: longitude,
+      date: dateString
     })
 
     console.log(response.data)
+    document.getElementsByClassName('note-write-loading')[0].setAttribute('style', 'display:none;')
     
     if(response.data.success) {
       this.props.addNote(response.data.note)
-      this.state.title = this.state.contents = ''
+      await this.setState({
+        title: '',
+        contents: ''
+      })
       this.props.showNote()
+      document.querySelector('#loading-toast').MaterialSnackbar.showSnackbar({message: 'Note posted.'})
+    } else {
+      document.querySelector('#loading-toast').MaterialSnackbar.showSnackbar({message: 'Failed to post note!'})
+
     }
+
   }
   render() {
     return (
@@ -201,12 +420,26 @@ class WriteNote extends React.Component {
               </div>
               <div className="mdl-cell--12-col">
                 <div className="mdl-textfield mdl-js-textfield">
-                  <textarea className="mdl-textfield__input" id="title-text" value={this.state.contents} onChange={this.changeContents.bind(this)} type="text" name="contents" rows="10"></textarea>
-                  <label className="mdl-textfield__label" htmlFor="contents-text">Content</label>
+                  <LiveMarkedArea
+                    label='Content'
+                    onChange={this.changeContents.bind(this)}
+                    className="mdl-textfield__input"
+                    id="contents-text"
+                  />
                 </div>
+                
+              </div>
+              <div className="mdl-cell--4-col">
+                <DatePicker
+                  selected={this.state.date}
+                  onChange={this.changeDate.bind(this)}
+                />
+              </div>
+              <div className="mdl-cell--8-col">
+                <button className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored right-align" type="submit">Write</button>
               </div>
               <div className="mdl-cell--12-col">
-                <button className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored right-align" type="submit">Write</button>
+                <div id="p2" className="mdl-progress mdl-js-progress note-write-loading mdl-progress__indeterminate" style={{display: 'none'}}></div>
               </div>
             </div>
           </form>
@@ -278,4 +511,31 @@ class Settings extends React.Component {
   }
 }
 
+class UploadImage extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {file: []}
+  }
+  async onDrop(file) {
+    this.setState({
+      file
+    })
+    const response = await axios.post('/background', {
+      image: file
+    })
+    if(response.data.success)
+      window.location.reload()
+  }
+  render() {
+    return (
+      <section>
+        <div className="dropzone">
+          <Dropzone accept="image/*" multiple="false" onDrop={this.onDrop.bind(this)}>
+            <p>Try dropping some files here, or click to select files to upload.</p>
+          </Dropzone>
+        </div>
+      </section>
+    )
+  }
+}
 export default NoteApp
