@@ -1,18 +1,29 @@
 import Router from 'koa-router'
-import Notes from '../../DB/Note'
+import levelup from 'levelup'
+import thenLevelup from 'then-levelup'
+import passwordHash from 'password-hash'
 import controller_settings from './settings.controller'
 
+const db = thenLevelup(levelup('../../DB/database.lvup', {'valueEncoding': 'json'}))
 const router = new Router({prefix: '/api'})
 
 export async function getNotes(ctx, next) {
-  const notes = await Notes.find({}).exec()
+  console.log(db)
+  let datas = {}
+  const readDb = await new Promise((resolve, reject) => {
+    db.createReadStream()
+    .on('data', data => datas[data.key] = data.value)
+    .on('error', reject)
+    .on('end', resolve)
+  })
+  
   ctx.body = await {
-    result: notes
+    result: datas
   }
 }
 
 export async function getNote(ctx, next) {
-  const note = await Notes.find({_id: ctx.request.body.id}).exec()
+  const note = await db.get(ctx.params.id)
   ctx.body = await {
     result: note
   }
@@ -21,45 +32,37 @@ export async function getNote(ctx, next) {
 export async function addNote(ctx, next) {
   const d = new Date(ctx.request.body.date)
   console.log(d)
-  
-  const note = new Notes({
+  const note = {
     title: ctx.request.body.title,
     contents: ctx.request.body.contents,
     latitude: ctx.request.body.latitude,
     longitude: ctx.request.body.longitude,
     time: d
-  })
-    
-  const saved_note = await note.save()
+  }
+  const key = passwordHash.generate(note.title + note.contents + note.latitude + note.longitude)
+  await db.put(key, note)
   ctx.body = await {
     success: true,
-    note: saved_note
+    key: key,
+    note: note
   }
 }
 
 export async function updateNote(ctx, next) {
-  let updates = ctx.request.body
-  await Notes.findOne({_id: ctx.params.id}).update(updates).exec()
-  const newNote = await Notes.findOne({_id: ctx.params.id}).exec()
+  const data = await db.get(ctx.params.id)
+  data['title'] = ctx.request.body.title
+  data['contents'] = ctx.request.body.contents
+  await db.put(ctx.params.id, data)
   ctx.body = await {
     success: true,
-    note: newNote
+    note: data
   }
 }
 
 export async function deleteNote(ctx, next) {
-  console.log('aaaa')
-  console.log(ctx.params.id)
-  try {
-    await Notes.findByIdAndRemove({_id: ctx.params.id}).exec()
-    ctx.body = await {
-      success: true
-    }
-  } catch(error) {
-    ctx.body = await {
-      success: false,
-      error: error
-    }
+  await db.del(ctx.params.id)
+  ctx.body = await {
+    success: true
   }
 }
 

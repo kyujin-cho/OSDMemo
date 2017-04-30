@@ -5,8 +5,6 @@ import json from 'koa-json'
 import BP from 'koa-bodyparser'
 import logger from 'koa-logger'
 
-import mongoose from 'mongoose'
-
 import index from './routes/index'
 const app = new Koa()
 const bodyparser = new BP()
@@ -21,13 +19,13 @@ app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
 
-const db = mongoose.connection
-db.on('error', console.error)
-db.once('open', () => {
-  console.log('connected to mongodb server')
-})
+// const db = mongoose.connection
+// db.on('error', console.error)
+// db.once('open', () => {
+//   console.log('connected to mongodb server')
+// })
 
-mongoose.connect('localhost/test')
+// mongoose.connect('localhost/test')
 
 // logger
 app.use(async (ctx, next) => {
@@ -44,5 +42,7 @@ app.on('error', function(err, ctx){
   console.log(err)
   logger.error('server error', err, ctx)
 })
+
+app.listen(process.env.PORT)
 
 export default app

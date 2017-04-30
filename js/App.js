@@ -1,10 +1,7 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import axios from 'axios'
-import Dropzone from 'react-dropzone'
 import Modal from 'react-modal'
 import DatePicker from 'react-datepicker'
-import { LiveMarkedArea } from 'react-markdown-area'
 import ReactMarkdown from 'react-markdown'
 import moment from 'moment'
 
@@ -29,23 +26,25 @@ function getUserPosition() {
 class NoteApp extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {notes: [], isOpen: false, title: '', contents: '', data: '', searchKwd: ''}
+    this.state = {notes: {}, isOpen: false, title: '', contents: '', data: '', searchKwd: ''}
   }
 
-  addNote(note) {
+  addNote(key, note) {
     note['hide'] = false
+    let newNote = this.state.notes
+    newNote[key] = note
     this.setState({
-      notes: this.state.notes.concat(note)
+      notes: newNote
     })
   }
 
-  async deleteNote(note) {
+  async deleteNote(key, note) {
     console.log('mocking ' + note._id + ' delete request')
     
     const response = await axios.delete('/api/notes/' + note._id)
     if(response.data.success) {
       const newNote = this.state.notes
-      newNote.splice(newNote.indexOf(note), 1)
+      delete newNote[key]
       this.setState({
         notes: newNote
       })
@@ -63,10 +62,9 @@ class NoteApp extends React.Component {
   async componentDidMount() {
     const response = await axios.get('/api/notes')
     console.log(response)
-    const notes = response.data.result.map((note, index) => {
-      note['hide'] = false
-      return note
-    })
+    for(const key in response.data.result) {
+      response.data.result[key]['hide'] = false
+    }
     this.setState({notes: response.data.result})
   }
 
@@ -143,7 +141,7 @@ class NoteApp extends React.Component {
     const title = this.state.title
     const contents = this.state.contents
 
-    const response = await axios.put('/api/notes/' + this.state.data._id, {
+    const response = await axios.put('/api/notes/' + this.state.key, {
       title: title, 
       contents: contents
     })
@@ -151,10 +149,8 @@ class NoteApp extends React.Component {
     console.log(response.data)
     
     if(response.data.success) {
-      const index = this.state.notes.indexOf(this.state.data)
-      console.log(index)
       let tmp = this.state.notes
-      tmp[index] = response.data.note
+      tmp[this.state.key] = response.data.note
       console.log(response.data.note)
       await this.setState({
         title: '',
@@ -222,13 +218,11 @@ class NoteApp extends React.Component {
                   <div className="mdl-cell--12-col">
                     <div className="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                       <input className="mdl-textfield__input" id="title-text" value={this.state.title} onChange={this.changeTitle.bind(this)} type="text" name="title"/>
-                      <label className="mdl-textfield__label" htmlFor="title-text">Title</label>
                     </div>
                   </div>
                   <div className="mdl-cell--12-col">
                     <div className="mdl-textfield mdl-js-textfield">
                       <textarea className="mdl-textfield__input" id="title-text" value={this.state.contents} onChange={this.changeContents.bind(this)} type="text" name="contents" rows="10"></textarea>
-                      <label className="mdl-textfield__label" htmlFor="contents-text">Content</label>
                     </div>
                   </div>
                   <div className="mdl-cell--12-col">
@@ -247,12 +241,11 @@ class NoteApp extends React.Component {
 
 class NoteList extends React.Component {
   render() {
-    const Notes = this.props.notes.map((note, index) => {
-      console.log(note)
-      
-      if(!note['hide'])
-        return <Note data={note} key={index} editNote={this.props.editNote} deleteNote={this.props.deleteNote}/>
-    })
+    let Notes = []
+    for(const key in this.props.notes) {
+      if(!this.props.notes[key]['hide'])
+        Notes.push(<Note data={this.props.notes[key]} key={key} editNote={this.props.editNote} deleteNote={this.props.deleteNote} />)
+    }
     
     return (
       <div className="notes">
@@ -309,12 +302,12 @@ class Note extends React.Component {
                   <span>Seoul, Korea</span>
                 </div>
                 <div className="mdl-cell mdl-cell--2-col mdl-cell--7-col-tablet mdl-cell--2-col-phone">
-                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.editNote(this.props.data)}}>
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.editNote(this.props.key, this.props.data)}}>
                   <i className="material-icons">edit</i>
                   </button> 
                 </div>
                 <div className="mdl-cell mdl-cell--2-col mdl-cell--1-col-tablet mdl-cell--2-col-phone">
-                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNote(this.props.data)}}>
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNot(this.props.key, this.props.data)}}>
                   <i className="material-icons">delete</i>
                   </button>
                 </div>
@@ -337,9 +330,9 @@ class WriteNote extends React.Component {
       title: event.target.value
     })
   }
-  changeContents(contents) {
+  changeContents(event) {
     this.setState({
-      contents: contents
+      contents: event.target.value
     })
   }
   changeDate(date) {
@@ -390,7 +383,7 @@ class WriteNote extends React.Component {
     document.getElementsByClassName('note-write-loading')[0].setAttribute('style', 'display:none;')
     
     if(response.data.success) {
-      this.props.addNote(response.data.note)
+      this.props.addNote(response.data.key, response.data.note)
       await this.setState({
         title: '',
         contents: ''
@@ -420,12 +413,9 @@ class WriteNote extends React.Component {
               </div>
               <div className="mdl-cell--12-col">
                 <div className="mdl-textfield mdl-js-textfield">
-                  <LiveMarkedArea
-                    label='Content'
-                    onChange={this.changeContents.bind(this)}
-                    className="mdl-textfield__input"
-                    id="contents-text"
-                  />
+                  <textarea className="mdl-textfield__input" id="contents-text" value={this.state.contents} onChange={this.changeContents.bind(this)} type="text" name="contents" rows="10"></textarea>
+                  <label className="mdl-textfield__label" htmlFor="contents-text">Content</label>
+                   <ReactMarkdown source={this.state.contents} />
                 </div>
                 
               </div>
