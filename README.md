@@ -1,5 +1,5 @@
 # OSDMemo
-Web-based memo app, supports encryption
+Web-based memo app. supports encryption natively
 
 ## Key Feature
 - Memo Create / Read / Update / Delete
@@ -24,7 +24,7 @@ Web-based memo app, supports encryption
 - Node.js 
 1. Clone repo via `git clone https://github.com/thy2134/OSDMemo.git && cd OSDMemo`
 2. Run `npm install`
-3. Run `./node_modules/.bin/electron-rebuild --version=1.4.3` in order to run LevelDB properly
+3. Run `npm rebuild --runtime=electron --target=1.4.3 --disturl=https://atom.io/download/atom-shell --build-from-source` in order to run LevelDB properly
 4. run `./node_modules/.bin/electron .`
 
 ## Packages
