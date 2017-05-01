@@ -1,10 +1,9 @@
 # OSDMemo
-Web-based memo app. supports encryption natively
+Web-based memo app
 
 ## Key Feature
 - Memo Create / Read / Update / Delete
 - Search memo 
-- Encrypt Memo / Save encryption key to keychain
 - Supports Markdown syntax
 - Save location where memo have been written
 
