@@ -26,3 +26,6 @@ Web-based memo app, supports encryption
 2. Run `npm install`
 3. Run `./node_modules/.bin/electron-rebuild --version=1.4.3` in order to run LevelDB properly
 4. run `./node_modules/.bin/electron .`
+
+## Packages
+- Bundles Package for macOS. See 'releases' tab.
