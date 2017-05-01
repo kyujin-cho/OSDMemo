@@ -1,61 +1,79 @@
 import Router from 'koa-router'
-import Notes from '../../DB/Note'
+import levelup from 'levelup'
+import thenLevelup from 'then-levelup'
+import passwordHash from 'password-hash'
 import controller_settings from './settings.controller'
 
+const db = thenLevelup(levelup(process.env.NOTE_FILEPATH, {'valueEncoding': 'json'}))
 const router = new Router({prefix: '/api'})
 
 export async function getNotes(ctx, next) {
-  const notes = await Notes.find({}).exec()
+  console.log(db)
+  let datas = {}
+  const readDb = await new Promise((resolve, reject) => {
+    db.createReadStream()
+    .on('data', data => datas[data.key] = data.value)
+    .on('error', reject)
+    .on('end', resolve)
+  })
+  
   ctx.body = await {
-    result: notes
+    result: datas
   }
 }
 
+export async function getIsLocked(ctx, next) {
+  const isLocked = await db.get('isLocked')
+  ctx.body = await {
+    result: isLocked === true
+  }
+}
 export async function getNote(ctx, next) {
-  const note = await Notes.find({_id: ctx.request.body.id}).exec()
+  const note = await db.get(ctx.params.id)
   ctx.body = await {
     result: note
   }
 }
 
 export async function addNote(ctx, next) {
-  const note = new Notes({
+  const d = new Date(ctx.request.body.date)
+  console.log(d)
+  const note = {
     title: ctx.request.body.title,
-    contents: ctx.request.body.contents
-  })
-  const saved_note = await note.save()
+    contents: ctx.request.body.contents,
+    latitude: ctx.request.body.latitude,
+    longitude: ctx.request.body.longitude,
+    time: d
+  }
+  const key = passwordHash.generate(note.title + note.contents + note.latitude + note.longitude)
+  await db.put(key, note)
   ctx.body = await {
     success: true,
-    note: saved_note
+    key: key,
+    note: note
   }
 }
 
 export async function updateNote(ctx, next) {
-  let updates = {}
-  if(ctx.request.body.title)
-    updates.title = ctx.request.body.title
-  if(ctx.request.body.contents)
-    updates.contents = ctx.request.body.contents
-  await Notes.find({_id: ctx.request.body.id}).update(updates).exec()
+  const data = await db.get(ctx.params.id)
+  data['title'] = ctx.request.body.title
+  data['contents'] = ctx.request.body.contents
+  await db.put(ctx.params.id, data)
+  ctx.body = await {
+    success: true,
+    note: data
+  }
+}
+
+export async function deleteNote(ctx, next) {
+  await db.del(ctx.params.id)
   ctx.body = await {
     success: true
   }
 }
 
-export async function deleteNote(ctx, next) {
-  console.log('aaaa')
-  console.log(ctx.params.id)
-  try {
-    await Notes.findByIdAndRemove({_id: ctx.params.id}).exec()
-    ctx.body = await {
-      success: true
-    }
-  } catch(error) {
-    ctx.body = await {
-      success: false,
-      error: error
-    }
-  }
+export async function uploadBackground(ctx, next) {
+  const image = ctx.request.body.image
 }
 router
 .get('/notes', getNotes)

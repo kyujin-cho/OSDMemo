@@ -30,6 +30,10 @@ button.right-align {
   float: right;
 }
 
+.mdl-progress__indeterminate {
+  padding-top: 5px;
+}
+
 .demo-card-wide.mdl-card {
   width: 90%;
   margin-left: auto;
