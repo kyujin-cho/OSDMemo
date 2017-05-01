@@ -64,4 +64,8 @@ typings/
 # Electron Package
 electron-darwin-x64
 
+
+# Webpack scripts
+script.js*
+
 # End of https://www.gitignore.io/api/node
