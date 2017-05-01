@@ -31,7 +31,6 @@ function createWindow() {
   app.server = require('./app')
   win = new BrowserWindow({ width: 800, height: 600 }) // create browser window
   win.loadURL('http://localhost:' + port)                 // load koa-app home page
-  win.openDevTools()
   win.on('closed', () => { win = null })              // dereference window object
 }
 
