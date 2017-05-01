@@ -1,12 +1,24 @@
 # OSDMemo
-Memo app which supports encryption.
+Web-based memo app, supports encryption
 
 ## Key Feature
 - Memo Create / Read / Update / Delete
 - Search memo 
 - Encrypt Memo / Save encryption key to keychain
 - Supports Markdown syntax
+- Save location where memo have been written
 
+## Modules
+1. Backend
+  - Node.js + Koa.js
+2. Frontend
+  - React.js
+  - Axios
+3. Database
+  - MongoDB (without electron)
+  - LevelDB (with electron)
+4. Design
+  - Material Design by Google
 ## Installation
 ### Prequisites
 - Node.js 
