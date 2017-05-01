@@ -61,5 +61,7 @@ typings/
 # dotenv environment variables file
 .env
 
+# Electron Package
+electron-darwin-x64
 
 # End of https://www.gitignore.io/api/node

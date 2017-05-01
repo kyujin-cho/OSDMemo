@@ -1,6 +1,7 @@
 
 require('babel-polyfill')
-
+require('babel-register')
+const flash = require('connect-flash')
 
 const { app, BrowserWindow } = require('electron') // www.npmjs.com/package/electron
 const spawn = require('child_process').spawn       // nodejs.org/api/child_process.html
@@ -11,6 +12,7 @@ const path = require('path')                       // nodejs.org/api/path.html
 let win = null // keep global reference to window object to avoid automatic closing on JS GC
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'production' // default to production environment
+process.env.NOTE_FILEPATH = app.getPath('appData')
 const port = Math.floor(Math.random() * 35535 + 30000)
 process.env.PORT = port
 const shouldQuit = app.makeSingleInstance(function(otherInstArgv, otherInstWorkingDir) {
@@ -29,6 +31,7 @@ function createWindow() {
   app.server = require('./app')
   win = new BrowserWindow({ width: 800, height: 600 }) // create browser window
   win.loadURL('http://localhost:' + port)                 // load koa-app home page
+  win.openDevTools()
   win.on('closed', () => { win = null })              // dereference window object
 }
 

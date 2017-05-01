@@ -64,10 +64,13 @@ class NoteApp extends React.Component {
   async componentDidMount() {
     const response = await axios.get('/api/notes')
     console.log(response)
+    
     for(const key in response.data.result) {
       response.data.result[key]['hide'] = false
     }
-    this.setState({notes: response.data.result})
+    this.setState({
+      notes: response.data.result
+    })
   }
 
   closeDrawer() {
@@ -130,14 +133,17 @@ class NoteApp extends React.Component {
     this.setState({searchKwd: event.target.value})
     const tmp = this.state.notes
     if(event.target.value === '') 
-      tmp.forEach(note => {note['hide'] = false})
+      for(const key in tmp)
+        tmp[key]['hide'] = false
     else
-      tmp.forEach(note => {note['hide'] = (note.title.indexOf(event.target.value) == -1) && (note.contents.indexOf(event.target.value) == -1)})
+      for(const key in tmp)
+        tmp[key]['hide'] = (tmp[key].title.indexOf(event.target.value) == -1) && (tmp[key].contents.indexOf(event.target.value) == -1)        
     this.setState({
       notes: tmp
     })
-
+  
   }
+  
   async editNote(event) {
     event.preventDefault()
     const title = this.state.title
@@ -168,25 +174,24 @@ class NoteApp extends React.Component {
   render() {
     return (
       <div>
-        <div className="layout-transparent mdl-layout mdl-js-layout">
-          <header className="mdl-layout__header mdl-layout__header--transparent">
+        <div className="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+          <header className="mdl-layout__header">
             <div className="mdl-layout__header-row">
               <span className="mdl-layout-title">Note Taking App</span>
               <div className="mdl-layout-spacer"></div>
-              <form>
-                <div className="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-                  <label className="mdl-button mdl-js-button mdl-button--icon" htmlFor="search-exp">
-                    <i className="material-icons">search</i>
-                  </label>
-                  <div className="mdl-textfield__expandable-holder">
-                    <input className="mdl-textfield__input" value={this.state.searchKwd} onChange={this.changeSearchKwd.bind(this)} id="search-exp" type="text"/>
-                  </div>
+              <div className="mdl-layout-spacer"></div>
+              <div className="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+                <label className="mdl-button mdl-js-button mdl-button--icon" htmlFor="search-exp">
+                  <i className="material-icons">search</i>
+                </label>
+                <div className="mdl-textfield__expandable-holder">
+                  <input className="mdl-textfield__input" value={this.state.searchKwd} onChange={this.changeSearchKwd.bind(this)} id="search-exp" type="text"/>
                 </div>
-              </form>
+              </div>
             </div>
           </header>
           <div className="mdl-layout__drawer">
-            <span className="mdl-layout-title">Note Taking App</span>
+            <span className="mdl-layout-title">Title</span>
             <nav className="mdl-navigation">
               <a className="mdl-navigation__link" onClick={this.showNote.bind(this)}>View Notes</a>
               <a className="mdl-navigation__link" onClick={this.showWriteNote.bind(this)}>Write Note</a>
@@ -196,7 +201,7 @@ class NoteApp extends React.Component {
           <main className="mdl-layout__content">
             <NoteList editNote={this.openEditNote.bind(this)} deleteNote={this.deleteNote.bind(this)} notes={this.state.notes} />
             {/*<Notes className="notes" notes={this.state.notes} addNote={this.addNote.bind(this)} />*/}
-            <WriteNote className="writeNote" addNote={this.addNote.bind(this)} showNote={this.showNote.bind(this)} />
+            <WriteNote className="writeNote" addNote={this.addNote.bind(this)} showNote={this.showNote.bind(this)}/>
             <Settings className="settings" />
           </main>
           <div id="loading-toast" className="mdl-js-snackbar mdl-snackbar" >
@@ -249,6 +254,8 @@ class NoteList extends React.Component {
   render() {
     let Notes = []
     for(const key in this.props.notes) {
+      console.log('1111')
+      console.log(key)      
       if(!this.props.notes[key]['hide'])
         Notes.push(<Note data={this.props.notes[key]} key={key} k={key} editNote={this.props.editNote} deleteNote={this.props.deleteNote} />)
     }
@@ -261,43 +268,45 @@ class NoteList extends React.Component {
   }
 }
 class Note extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state={isOpen: false}
-  }
   getParent() {
     return document.querySelector('main.mdl-layout__content')
   }
-  
-  openModal() {
-    this.setState({isOpen: true})
-    document.querySelector('main.mdl-layout__content').setAttribute('style', 'display: none;')
-  }
-  afterOpenModal() {
-    // this.subtitle.style.color = '#f00'
-  }
-  closeModal() {
-    this.setState({isOpen: false})
-    document.querySelector('main.mdl-layout__content').removeAttribute('style')
-  }
-  
-  render() {
+  render() {    
     const date = moment(this.props.data.time).format('MMMM Do YYYY')
     const AnyReactComponent = ({ text }) => <div>{text}</div>
     let GoogleMap
     if(this.props.data.latitude !== -200) {
+      try {
+        GoogleMap = (
+          <div>
+            <i className="material-icons">location_on</i>          
+            <GoogleMapReact
+              defaultCenter={{lat: this.props.data.latitude, lon: this.props.data.longitude}}
+              defaultZoom={11}
+            >
+              <AnyReactComponent
+                lat={this.props.data.latitude}
+                lon={this.props.data.longitude}
+                text={'You\'re here!'} />
+            </GoogleMapReact>
+          </div>
+        )
+      } catch (error) {
+        GoogleMap = 
+          <div>
+            <i className="material-icons">location_off</i>
+            <span>No Location Record</span>
+          </div>
+        
+      }
+    } else {
       GoogleMap = (
-        <GoogleMapReact
-          defaultCenter={{lat: this.props.data.latitude, lon: this.props.data.longitude}}
-          defaultZoom={11}
-        >
-          <AnyReactComponent
-            lat={this.props.data.latitude}
-            lon={this.props.data.longitude}
-            text={'You\'re here!'} />
-        </GoogleMapReact>
+        <div>
+          <i className="material-icons">location_off</i>
+          <span>No Location Record</span>
+        </div>
       )
-    } 
+    }
     return (
       <div>
         <div className="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet mld-cell--4-col-phone">
@@ -317,7 +326,7 @@ class Note extends React.Component {
                   <span>{date}</span>
                 </div>
                 <div className="mdl-cell mdl-cell--1-col mdl-cell--1-col-tablet mdl-cell--1-col-phone">
-                  <i className="material-icons">location_on</i>
+                  
                 </div>
                 <div className="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet mdl-cell--3-col-phone">
                   {GoogleMap}
@@ -328,7 +337,7 @@ class Note extends React.Component {
                   </button> 
                 </div>
                 <div className="mdl-cell mdl-cell--2-col mdl-cell--1-col-tablet mdl-cell--2-col-phone">
-                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNot(this.props.k, this.props.data)}}>
+                  <button className="right-align mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab" onClick={() => {this.props.deleteNote(this.props.k, this.props.data)}}>
                   <i className="material-icons">delete</i>
                   </button>
                 </div>
@@ -361,10 +370,11 @@ class WriteNote extends React.Component {
       date: date
     })
   }
+  
   async writeNote(event) {
     event.preventDefault()
-    const title = this.state.title
-    const contents = this.state.contents
+    let title = this.state.title
+    let contents = this.state.contents
     if(!title || !contents) {
       alert('내용 및 제목을 입력해 주세요!')
       return
@@ -440,13 +450,8 @@ class WriteNote extends React.Component {
                 </div>
                 
               </div>
-              <div className="mdl-cell--4-col">
-                <DatePicker
-                  selected={this.state.date}
-                  onChange={this.changeDate.bind(this)}
-                />
-              </div>
-              <div className="mdl-cell--8-col">
+              
+              <div className="mdl-cell--6-col">
                 <button className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored right-align" type="submit">Write</button>
               </div>
               <div className="mdl-cell--12-col">
@@ -494,7 +499,7 @@ class Settings extends React.Component {
             </li>
             <li className="mdl-list__item mdl-list__item--three-line">
               <span className="mdl-list__item-primary-content">
-                <span className="settings-title">Set password</span>
+                <span className="settings-title">Enable/Disable keychain</span>
                 <span className="mdl-list__item-text-body">Set password to protect your memo</span>
               </span>
               <span className="mdl-list__item-secondary-content">
@@ -521,6 +526,7 @@ class Settings extends React.Component {
     )
   }
 }
+
 
 class UploadImage extends React.Component {
   constructor(props) {

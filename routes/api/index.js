@@ -4,7 +4,7 @@ import thenLevelup from 'then-levelup'
 import passwordHash from 'password-hash'
 import controller_settings from './settings.controller'
 
-const db = thenLevelup(levelup('../../NOTESDB', {'valueEncoding': 'json'}))
+const db = thenLevelup(levelup(process.env.NOTE_FILEPATH, {'valueEncoding': 'json'}))
 const router = new Router({prefix: '/api'})
 
 export async function getNotes(ctx, next) {
@@ -22,6 +22,12 @@ export async function getNotes(ctx, next) {
   }
 }
 
+export async function getIsLocked(ctx, next) {
+  const isLocked = await db.get('isLocked')
+  ctx.body = await {
+    result: isLocked === true
+  }
+}
 export async function getNote(ctx, next) {
   const note = await db.get(ctx.params.id)
   ctx.body = await {
